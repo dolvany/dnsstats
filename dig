@@ -1,0 +1,7 @@
+#!/bin/bash
+name="google.com"
+for i in 8.8.8.8 8.8.4.4; do
+  o=$(dig +tries=1 @$i $name)
+  jq -Rsr --arg ip $i --arg exit $? --arg name $name 'if $exit=="0" then split("\n")[-5]|split(" ")[3]|"dns,ip=\($ip),exit=\($exit),name=\($name) msec=\(.),avail=1 \(now*1000000)" else "dns,ip=\($ip),exit=\($exit),name=\($name) avail=0 \(now*1000000)" end' <<< $o
+done | \
+curl -so /dev/null -XPOST "http://127.0.0.1:8086/write?db=google&precision=u" --data-binary @-
